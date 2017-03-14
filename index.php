@@ -118,7 +118,7 @@ function dealTwoBoth(){
     }
 
 }
-
+// comment to change
 //deal player one card
 function dealplayer(){
     if ($_SESSION['player'] > 0 && $_SESSION['player'] < 21) {
