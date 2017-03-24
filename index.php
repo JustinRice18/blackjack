@@ -1,20 +1,18 @@
+<?php session_start(); ?>
+
+    <form action="index.php" method="get">
+        <input type="submit" value="hit" name="action">
+        <input type="submit" value="pass" name="action" >
+        <input type="submit" value="newgame" name="action">
+
+    </form>
+
 <?php
-//requrie_once('index.php');
-session_start();
-
-
-?>
-<form action="index.php" method="get">
-    <input type="submit" value="hit" name="action">
-    <input type="submit" value="pass" name="action" >
-    <input type="submit" value="newgame" name="action">
-
-</form>
-<?php
-//requrie_once('index.php');
-
 if (!isset($_SESSION["deck"])) {
-    $_SESSION["deck"] = array(
+    $_SESSION['pTotal'] = 0;
+    $_SESSION['dTotal'] = 0;
+    $_SESSION['dShowing'] = 0;
+    $_SESSION["deck"] = [
         "Ace of Diamonds" => 1,
         "Ace of Hearts" => 1,
         "Ace of Clubs" => 1,
@@ -66,143 +64,77 @@ if (!isset($_SESSION["deck"])) {
         "King of Clubs" => 10,
         "King of Diamonds" => 10,
         "King of Hearts" => 10,
-        "King of Spades" => 10,);
+        "King of Spades" => 10];
 
+    $keys = array_keys($_SESSION['deck']);
+    $newDeck = [];
+    foreach ($keys as $key) {
+        $newDeck[] = ['name' => $key, 'value' => $_SESSION['deck'][$key]];
+    }
+    $_SESSION['deck'] = $newDeck;
+    shuffle($_SESSION['deck']);
 }
-
-
-
 if(isset($_GET['action'])) {
-
-
-      switch ($_GET['action']) {
-          case "NewGame":
-              session_unset();
-              break;
-          case 'hit':
-               dealTwoBoth();
-              break;
-
-              break;
-          case 'pass';
-              dealcomputer();
-              break;
-
-      }
-
-
-  }
-
-
-
-
-
-
-
-
+    switch ($_GET['action']) {
+        case "newgame":
+            session_unset();
+            break;
+        case 'hit':
+            dealTwoBoth();
+            break;
+        case 'pass':
+            dealcomputer();
+            break;
+    }
+}
 //deal player and computer two cards ran on hit;
-function dealTwoBoth(){
-    if($_SESSION['player']=== 0) {
-        $randomkey = array_rand($_SESSION["deck"], 2);
-        $end = implode($randomkey, " and ");
-
-        foreach ($randomkey as $key) {
-            $_SESSION['player'] = +$_SESSION['deck'][$key];
-        }
-
-        echo "you received. " . $end, '<br />';
-        echo " adding to " . $_SESSION['player'], '<br />';
-        dealComputerTwo();
-    }else{
+function dealTwoBoth() {
+    if($_SESSION['pTotal'] === 0) {
+        $p1 = array_pop($_SESSION['deck']);
+        $p2 = array_pop($_SESSION['deck']);
+        $d1 = array_pop($_SESSION['deck']);
+        $d2 = array_pop($_SESSION['deck']);
+        $_SESSION['pTotal'] += $p1['value'] + $p2['value'];
+        echo "Player dealt {$p1['name']} and {$p2['name']} with value {$_SESSION['pTotal']} <br><br>";
+        $_SESSION['dTotal'] += $d1['value'] + $d2['value'];
+        $_SESSION['dShowing'] += $d1['value'];
+        echo "<br>";
+        echo "Dealer dealt {$d1['name']} and Face Down Card with value showing of {$d1['value']} <br><br>";
+    } else {
         dealplayer();
     }
-
 }
 // comment to change
 //deal player one card
-function dealplayer(){
-    if ($_SESSION['player'] > 0 && $_SESSION['player'] < 21) {
-        $randomkeys = array_rand($_SESSION["deck"]);
-
-        foreach ($randomkeys as $keys) {
-            ($_SESSION['player'] =+ $_SESSION['deck'][$keys]);
-        }
-        echo "you received " . $randomkeys . " bringing your total to " . $_SESSION['player'];
-
-
+function dealplayer() {
+    $p1 = array_pop($_SESSION['deck']);
+    $_SESSION['pTotal'] += $p1['value'];
+    echo "Player dealt {$p1['name']} with total value now equaling: {$_SESSION['pTotal']} <br><br>";
+    if ($_SESSION['pTotal'] > 21) {
+        echo "Player Busts! Dealer Wins. Click New Game! <br><br>";
     }
 }
-
-//deal computer two cards
-function dealComputerTwo(){
-    $randomkey = array_rand($_SESSION["deck"], 2);
-        $end = implode($randomkey, " and ");
-
-        foreach ($randomkey as $key) {
-            $_SESSION['dealer'] = $_SESSION['dealer'] + $_SESSION['deck'][$key];
-
-        }
-
-        echo "dealer has. " . $end, '<br />';
-        echo " adding to " . $_SESSION['dealer'], '<br />';
-
-
-}
-
 //deal computer one card if less than 17
-function dealcomputer(){
-    if ($_SESSION['dealer'] > 0 && $_SESSION['dealer'] < 17) {
-            $randomkeys = array_rand($_SESSION["deck"]);
-
-            foreach ($randomkeys as $keys) {
-                ($_SESSION['dealer'] =+ $_SESSION['deck'][$keys]);
-            }
-            echo "dealer has" . $randomkeys . " bringing his total to " . ($_SESSION['dealer']);
-
-
-        }elseif($_SESSION['dealer']>= 17){
-            if($_SESSION['dealer']> $_SESSION['player']){
-                echo "dealer wins with". $_SESSION['dealer'], '<br/>';
-                echo "you only having ". $_SESSION['player'];
-            }
-
-
+function dealcomputer() {
+    while ($_SESSION['dTotal'] < 17) {
+        $d1 = array_pop($_SESSION['deck']);
+        $_SESSION['dTotal'] += $d1['value'];
+        $_SESSION['dShowing'] += $d1['value'];
+        echo "Dealer dealt {$d1['name']} with total value showing now equaling: {$_SESSION['dShowing']} <br><br>";
     }
+    echo "Dealer: {$_SESSION['dTotal']} | Player: {$_SESSION['pTotal']} <br><br>";
+    if ($_SESSION['dTotal'] > 21) {
+        echo "Dealer Busts! Player Wins. Click New Game! <br><br>";
+    } else {
+        echo "Dealer stays with {$_SESSION['dTotal']} <br><br>";
 
-}
-
-
-/*
-if($_SESSION['player']= 0); {
-    foreach ($play as $x => $x_value) {
-        echo "you pulled" . $x . ", bringing your total to" . $x_value;
-        echo "<br>";
+        if ($_SESSION['dTotal'] >= $_SESSION['pTotal']) {
+            echo "Dealer Wins. Click New Game! <br><br>";
+        } else {
+            echo "Player Wins. Click New Game! <br><br>";
+        }
     }
-*/
-
-
-
-
-Function hit(){
-    foreach ($_SESSION['deck'] as $value => $key);
-
-    $play = array_rand($_SESSION["deck"]);
-    echo $play;
-    echo $_SESSION['player'] =+$play;
 }
-
-Function newGame(){
-    $play = array_rand($_SESSION["deck"]);
-    echo $play;
-
-}
-function drawTwo(){
-    shuffle($_SESSION['deck']);
-}
-
-// echo array_values($play);
-   // unset($_SESSION["deck"][$play]);
-
 
 
 
